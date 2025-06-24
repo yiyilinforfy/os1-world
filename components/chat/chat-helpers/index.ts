@@ -19,8 +19,10 @@ import {
   LLM,
   MessageImage
 } from "@/types"
+import { streamToResponse } from "ai"
 import React from "react"
 import { toast } from "sonner"
+import { Stream } from "stream"
 import { v4 as uuidv4 } from "uuid"
 
 export const validateChatSettings = (
@@ -160,13 +162,11 @@ export const handleLocalChat = async (
 
   // Ollama API: https://github.com/jmorganca/ollama/blob/main/docs/api.md
   const response = await fetchChatResponse(
-    process.env.NEXT_PUBLIC_OLLAMA_URL + "/api/chat",
+    process.env.NEXT_PUBLIC_OLLAMA_URL,
     {
-      model: chatSettings.model,
+      model: 'deepseek-chat',
       messages: formattedMessages,
-      options: {
-        temperature: payload.chatSettings.temperature
-      }
+      stream: true
     },
     false,
     newAbortController,
@@ -257,7 +257,11 @@ export const fetchChatResponse = async (
   const response = await fetch(url, {
     method: "POST",
     body: JSON.stringify(body),
-    signal: controller.signal
+    signal: controller.signal,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer sk-2df11c27aa234fcea52f97eab081f9fc`
+    }
   })
 
   if (!response.ok) {
@@ -300,21 +304,26 @@ export const processResponse = async (
         try {
           contentToAdd = isHosted
             ? chunk
-            : // Ollama's streaming endpoint returns new-line separated JSON
-              // objects. A chunk may have more than one of these objects, so we
-              // need to split the chunk by new-lines and handle each one
-              // separately.
-              chunk
-                .trimEnd()
-                .split("\n")
-                .reduce(
-                  (acc, line) => acc + JSON.parse(line).message.content,
-                  ""
-                )
+            : chunk
+                .trim()
+                .split('\n')
+                .filter(line => line.trim() && line.trim() !== '[DONE]')
+                .reduce((acc, line) => {
+                  try {
+                    // 👇 正确去除 "data: " 前缀
+                    const jsonStr = line.replace(/^data:\s*/, '')
+                    const parsed = JSON.parse(jsonStr)
+                    return acc + (parsed.choices?.[0]?.delta?.content || '')
+                  } catch (err) {
+                    console.warn('Skipping invalid JSON line:', line)
+                    return acc
+                  }
+                }, '')
+        
           fullText += contentToAdd
         } catch (error) {
-          console.error("Error parsing JSON:", error)
-        }
+          console.error('Error parsing JSON:', error)
+        }        
 
         setChatMessages(prev =>
           prev.map(chatMessage => {

@@ -9,7 +9,7 @@ interface ThemeSwitcherProps {}
 export const ThemeSwitcher: FC<ThemeSwitcherProps> = () => {
   const { setTheme, theme } = useTheme()
 
-  const handleChange = (theme: "dark" | "light") => {
+  const handleChange = (theme: "light" | "dark") => {
     localStorage.setItem("theme", theme)
 
     setTheme(theme)

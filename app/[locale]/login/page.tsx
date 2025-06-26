@@ -53,6 +53,11 @@ export default async function Login({
 
     const email = formData.get("email") as string
     const password = formData.get("password") as string
+
+    if(!email || !password){
+      return redirect(`/login?message=Please fill out all fields to log in!`)
+    }
+
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
 
@@ -96,6 +101,10 @@ export default async function Login({
     const email = formData.get("email") as string
     const password = formData.get("password") as string
 
+    if(!email || !password){
+      return redirect(`/login?message=Please fill out all fields to sign up!`)
+    }
+
     const emailDomainWhitelistPatternsString = await getEnvVarOrEdgeConfigValue(
       "EMAIL_DOMAIN_WHITELIST"
     )
@@ -121,25 +130,31 @@ export default async function Login({
 
     const cookieStore = cookies()
     const supabase = createClient(cookieStore)
+    const origin = headers().get("origin")
 
-    const { error } = await supabase.auth.signUp({
+    const res = await supabase.auth.signUp({
       email,
       password,
       options: {
         // USE IF YOU WANT TO SEND EMAIL VERIFICATION, ALSO CHANGE TOML FILE
-        // emailRedirectTo: `${origin}/auth/callback`
+        emailRedirectTo: `${origin}/auth/callback`
       }
     })
 
-    if (error) {
-      console.error(error)
-      return redirect(`/login?message=${error.message}`)
+    console.log('res: ', res?.data?.user?.user_metadata)
+
+    if(res?.data?.user?.user_metadata?.email_verified !== false){
+      return redirect(`/login?message=${email} already exists. You can just log in!`)
+    } else if(res?.error){
+      return redirect(`/login?message=${res.error.message}`)
     }
 
-    return redirect("/setup")
+    console.log(res)
+
+    // return redirect("/setup")
 
     // USE IF YOU WANT TO SEND EMAIL VERIFICATION, ALSO CHANGE TOML FILE
-    // return redirect("/login?message=Check email to continue sign in process")
+    return redirect("/login?message=Check email to continue sign in process")
   }
 
   const handleResetPassword = async (formData: FormData) => {
@@ -173,9 +188,9 @@ export default async function Login({
           Email
         </Label>
         <Input
+          id="email"
           className="mb-3 rounded-md border bg-inherit px-4 py-2"
           name="email"
-          placeholder="you@example.com"
           required
         />
 
@@ -183,10 +198,10 @@ export default async function Login({
           Password
         </Label>
         <Input
+          id="password"
           className="mb-6 rounded-md border bg-inherit px-4 py-2"
           type="password"
           name="password"
-          placeholder="••••••••"
         />
 
         <SubmitButton className="mb-2 rounded-md bg-blue-700 px-4 py-2 text-white">
@@ -206,12 +221,12 @@ export default async function Login({
             formAction={handleResetPassword}
             className="text-primary ml-1 underline hover:opacity-80"
           >
-            Reset
+            Reset password
           </button>
         </div>
 
         {searchParams?.message && (
-          <p className="bg-foreground/10 text-foreground mt-4 p-4 text-center">
+          <p className="mt-4 bg-amber-100 p-4 text-center text-amber-800">
             {searchParams.message}
           </p>
         )}

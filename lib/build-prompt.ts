@@ -7,7 +7,8 @@ const buildBasePrompt = (
   prompt: string,
   profileContext: string,
   workspaceInstructions: string,
-  assistant: Tables<"assistants"> | null
+  assistant: Tables<"assistants"> | null,
+  citeContent: string
 ) => {
   let fullPrompt = ""
 
@@ -25,6 +26,10 @@ const buildBasePrompt = (
     fullPrompt += `System Instructions:\n${workspaceInstructions}\n\n`
   }
 
+  if (citeContent) {
+    fullPrompt += `User Reference:\nThe user has selected the following reference content from the chat history for this question:\n${citeContent}\n\n`
+  }
+
   fullPrompt += `User Instructions:\n${prompt}`
 
   return fullPrompt
@@ -32,6 +37,7 @@ const buildBasePrompt = (
 
 export async function buildFinalMessages(
   payload: ChatPayload,
+  citeContent: string,
   profile: Tables<"profiles">,
   chatImages: MessageImage[]
 ) {
@@ -48,7 +54,8 @@ export async function buildFinalMessages(
     chatSettings.prompt,
     chatSettings.includeProfileContext ? profile.profile_context || "" : "",
     chatSettings.includeWorkspaceInstructions ? workspaceInstructions : "",
-    assistant
+    assistant,
+    citeContent
   )
 
   const CHUNK_SIZE = chatSettings.contextLength

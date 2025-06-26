@@ -28,7 +28,9 @@ export const useChatHandler = () => {
   const {
     userInput,
     chatFiles,
+    chatCiteContent,
     setUserInput,
+    setChatCiteContent,
     setNewMessageImages,
     profile,
     setIsGenerating,
@@ -81,6 +83,7 @@ export const useChatHandler = () => {
     if (!selectedWorkspace) return
 
     setUserInput("")
+    setChatCiteContent("")
     setChatMessages([])
     setSelectedChat(null)
     setChatFileItems([])
@@ -194,9 +197,11 @@ export const useChatHandler = () => {
     isRegeneration: boolean
   ) => {
     const startingInput = messageContent
+    const citeContent = chatCiteContent
 
     try {
       setUserInput("")
+      setChatCiteContent("")
       setIsGenerating(true)
       setIsPromptPickerOpen(false)
       setIsFilePickerOpen(false)
@@ -256,7 +261,8 @@ export const useChatHandler = () => {
           b64Images,
           isRegeneration,
           setChatMessages,
-          selectedAssistant
+          selectedAssistant,
+          citeContent
         )
 
       let payload: ChatPayload = {
@@ -274,6 +280,7 @@ export const useChatHandler = () => {
 
       generatedText = await handleLocalChat(
         payload,
+        citeContent || '',
         profile!,
         chatSettings!,
         tempAssistantChatMessage,

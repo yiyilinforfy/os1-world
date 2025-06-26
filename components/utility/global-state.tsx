@@ -109,6 +109,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [isAssistantPickerOpen, setIsAssistantPickerOpen] = useState(false)
 
   // ATTACHMENTS STORE
+  const [chatCiteContent, setChatCiteContent] = useState<string>('')
   const [chatFiles, setChatFiles] = useState<ChatFile[]>([])
   const [chatImages, setChatImages] = useState<MessageImage[]>([])
   const [newMessageFiles, setNewMessageFiles] = useState<ChatFile[]>([])
@@ -301,6 +302,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setIsAssistantPickerOpen,
 
         // ATTACHMENT STORE
+        chatCiteContent,
+        setChatCiteContent,
         chatFiles,
         setChatFiles,
         chatImages,

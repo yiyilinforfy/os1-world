@@ -88,12 +88,13 @@ export const createTempMessages = (
   b64Images: string[],
   isRegeneration: boolean,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  selectedAssistant: Tables<"assistants"> | null
+  selectedAssistant: Tables<"assistants"> | null,
+  citeContent: string
 ) => {
   let tempUserChatMessage: ChatMessage = {
     message: {
       chat_id: "",
-      assistant_id: null,
+      assistant_id: citeContent,
       content: messageContent,
       created_at: "",
       id: uuidv4(),
@@ -110,7 +111,7 @@ export const createTempMessages = (
   let tempAssistantChatMessage: ChatMessage = {
     message: {
       chat_id: "",
-      assistant_id: selectedAssistant?.id || null,
+      assistant_id: citeContent || null,
       content: "",
       created_at: "",
       id: uuidv4(),
@@ -148,6 +149,7 @@ export const createTempMessages = (
 
 export const handleLocalChat = async (
   payload: ChatPayload,
+  citeContent: string,
   profile: Tables<"profiles">,
   chatSettings: ChatSettings,
   tempAssistantMessage: ChatMessage,
@@ -158,7 +160,7 @@ export const handleLocalChat = async (
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  const formattedMessages = await buildFinalMessages(payload, profile, [])
+  const formattedMessages = await buildFinalMessages(payload, citeContent, profile, [])
 
   // Ollama API: https://github.com/jmorganca/ollama/blob/main/docs/api.md
   const response = await fetchChatResponse(
